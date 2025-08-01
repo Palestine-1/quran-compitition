@@ -22,15 +22,31 @@ export const Footer: React.FC = () => {
             <div className="space-y-2 text-gray-300">
               <div className="flex items-center justify-center gap-2">
                 <Mail className="w-4 h-4" />
-                <span>info@mosque-eastern.org</span>
+                <a href="mailto:tarekaboya2019@gmail.com" className="hover:text-white transition-colors">
+                  tarekaboya2019@gmail.com
+                </a>
               </div>
               <div className="flex items-center justify-center gap-2">
                 <Phone className="w-4 h-4" />
-                <span>+966 11 123 4567</span>
+                <div className="flex flex-col gap-1">
+                  <a href="tel:+966111234567" className="hover:text-white transition-colors">
+                    +966 11 123 4567
+                  </a>
+                  <a href="tel:+01559181558" className="hover:text-white transition-colors">
+                    +0155 918 1558
+                  </a>
+                </div>
               </div>
               <div className="flex items-center justify-center gap-2">
                 <MapPin className="w-4 h-4" />
-                <span>الجامع الشرقي، المملكة العربية السعودية</span>
+                <a 
+                  href="https://maps.app.goo.gl/BA3xbuvekc8kgKaMA" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  الجامع الشرقي، دمليج، منوف، المنوفية
+                </a>
               </div>
             </div>
           </div>
