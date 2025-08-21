@@ -1,13 +1,13 @@
 import React from "react";
-import { Student } from "../types";
+import { Result } from "../types";
 import { Trophy, Medal, Award, User, Hash, BookOpen, Star } from "lucide-react";
 import { getCategoryColor, getGradeColor } from "../utils/contestStats";
 
 interface ResultCardProps {
-  student: Student;
+  result: Result;
 }
 
-export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
+export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="w-8 h-8 text-yellow-500" />;
     if (rank === 2) return <Medal className="w-8 h-8 text-gray-400" />;
@@ -29,8 +29,8 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
         {/* Header with rank */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
-            {getRankIcon(student.rank!)}
-            <h3 className="text-2xl font-bold">{getRankText(student.rank!)}</h3>
+            {getRankIcon(result.rank!)}
+            <h3 className="text-2xl font-bold">{getRankText(result.rank!)}</h3>
           </div>
           <p className="text-blue-100">تهانينا على هذا الإنجاز الرائع!</p>
         </div>
@@ -41,7 +41,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
             <User className="w-6 h-6 text-blue-600" />
             <div className="flex-1 text-right">
               <p className="text-sm text-gray-600 mb-1">اسم الطالب</p>
-              <p className="text-xl font-bold text-gray-800">{student.name}</p>
+              <p className="text-xl font-bold text-gray-800">{result.name}</p>
             </div>
           </div>
 
@@ -49,7 +49,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
             <Hash className="w-6 h-6 text-green-600" />
             <div className="flex-1 text-right">
               <p className="text-sm text-gray-600 mb-1">رقم الطالب</p>
-              <p className="text-xl font-bold text-gray-800">{student.id}</p>
+              <p className="text-xl font-bold text-gray-800">{result.id}</p>
             </div>
           </div>
 
@@ -59,10 +59,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
               <p className="text-sm text-gray-600 mb-1">الفئة</p>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getCategoryColor(
-                  student.category
+                  result.category
                 )}`}
               >
-                {student.category}
+                {result.category}
               </span>
             </div>
           </div>
@@ -74,10 +74,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
               <div className="flex items-center justify-end gap-2">
                 <span
                   className={`text-3xl font-bold px-4 py-2 rounded-lg ${getGradeColor(
-                    student.grade
+                    result.grade
                   )}`}
                 >
-                  {student.grade}
+                  {result.grade}
                 </span>
                 <span className="text-lg text-gray-600">من 100</span>
               </div>
@@ -88,11 +88,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ student }) => {
         {/* Footer message */}
         <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 text-center">
           <p className="font-semibold">
-            {student.grade >= 95
+            {result.grade >= 95
               ? "أداء ممتاز! استمر في التميز"
-              : student.grade >= 85
+              : result.grade >= 85
               ? "أداء جيد جداً! مبروك"
-              : student.grade >= 75
+              : result.grade >= 75
               ? "أداء جيد! يمكنك تحسين أكثر"
               : "حاول مرة أخرى! النجاح يحتاج إلى مثابرة"}
           </p>

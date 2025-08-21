@@ -1,42 +1,51 @@
 import React, { useState } from 'react';
 import { Search, User, AlertCircle, Clock, BookOpen } from 'lucide-react';
-import { Student } from '../types';
+import { Student, Result } from '../types';
+import { searchResults } from '../utils/api';
 
 interface SearchSectionProps {
   students: Student[];
-  onResult: (student: Student | null) => void;
+  onResult: (result: Result | null) => void;
   isDarkMode?: boolean;
 }
 
 export const SearchSection: React.FC<SearchSectionProps> = ({ students, onResult, isDarkMode = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   const handleSearch = async () => {
-    // منع البحث - المسابقة لم تبدأ بعد
-    onResult(null);
-    return;
-    
-    // الكود القديم للبحث (معطل حالياً)
-    /*
     if (!searchTerm.trim()) {
+      onResult(null);
+      setSearchError('');
+      return;
+    }
+
+    // التحقق من أن الاسم يحتوي على كلمتين على الأقل
+    const nameParts = searchTerm.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      setSearchError('يجب كتابة الاسم ثنائي على الأقل (الاسم الأول والثاني)');
       onResult(null);
       return;
     }
 
+    setSearchError('');
     setIsLoading(true);
     
-    // Simulate search delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const found = students.find(student => 
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.id.toString() === searchTerm.trim()
-    );
-    
-    onResult(found || null);
-    setIsLoading(false);
-    */
+    try {
+      const results = await searchResults(searchTerm);
+      if (results.length > 0) {
+        onResult(results[0]); // إرجاع أول نتيجة
+      } else {
+        onResult(null);
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      setSearchError(error.message || 'حدث خطأ أثناء البحث');
+      onResult(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -83,42 +92,69 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ students, onResult
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="البحث متوقف حالياً - ترقبوا النتائج قريباً..."
+                    placeholder="ادخل الاسم الثنائي للطالب (مثال: أحمد محمد)..."
                     className={`flex-1 px-6 py-4 text-right focus:outline-none text-lg transition-colors duration-300 ${
                       isDarkMode 
                         ? 'bg-gray-800 text-gray-100 placeholder-gray-400' 
                         : 'bg-white text-gray-900 placeholder-gray-500'
                     }`}
                     dir="rtl"
-                    disabled={true}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
               
               <button
                 onClick={handleSearch}
-                disabled={true}
-                className="px-8 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-bold text-lg bg-gray-400 text-gray-200 cursor-not-allowed"
+                disabled={isLoading}
+                className={`px-8 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-bold text-lg transform hover:scale-105 shadow-xl ${
+                  isLoading
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-2xl hover:shadow-blue-500/25'
+                }`}
               >
-                <Clock className="w-6 h-6" />
-                ترقبوا النتائج
+                {isLoading ? (
+                  <>
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    جاري البحث...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-6 h-6" />
+                    بحث عن النتيجة
+                  </>
+                )}
               </button>
             </div>
+            
+            {/* رسالة خطأ */}
+            {searchError && (
+              <div className={`mt-6 p-4 rounded-xl border-2 text-center animate-fadeIn ${
+                isDarkMode 
+                  ? 'bg-red-900/30 border-red-600/50 text-red-300' 
+                  : 'bg-red-100 border-red-300 text-red-700'
+              }`}>
+                <div className="flex items-center justify-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-semibold">{searchError}</span>
+                </div>
+              </div>
+            )}
             
             {/* رسالة توضيحية */}
             <div className={`mt-6 p-6 rounded-2xl border-2 text-center transition-colors duration-300 ${
               isDarkMode 
-                ? 'bg-gradient-to-r from-orange-900/30 to-yellow-900/30 border-orange-600/50' 
-                : 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300'
+                ? 'bg-gradient-to-r from-green-900/30 to-blue-900/30 border-green-600/50' 
+                : 'bg-gradient-to-r from-green-100 to-blue-100 border-green-300'
             }`}>
               <div className="flex justify-center items-center gap-3 mb-4">
-                <AlertCircle className={`w-8 h-8 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'} animate-pulse`} />
-                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-orange-200' : 'text-orange-800'}`}>
-                  البحث عن النتائج متوقف حالياً
+                <BookOpen className={`w-8 h-8 ${isDarkMode ? 'text-green-400' : 'text-green-600'} animate-bounce-slow`} />
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+                  البحث عن النتائج متاح الآن
                 </h3>
               </div>
-              <p className={`text-lg ${isDarkMode ? 'text-orange-300' : 'text-orange-700'}`}>
-                ستكون النتائج متاحة فور انتهاء جميع الاختبارات والتصحيح
+              <p className={`text-lg ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+                اكتب الاسم الثنائي للطالب للبحث عن نتيجته في المسابقة
               </p>
             </div>
           </div>

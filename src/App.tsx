@@ -17,10 +17,10 @@ import { RegistrationPage } from "./components/RegistrationPage";
 import { Clock, AlertCircle, BookOpen } from "lucide-react";
 import { rankedStudents } from "./data/students";
 import { calculateStats } from "./utils/contestStats";
-import { Student } from "./types";
+import { Student, Result } from "./types";
 
 function App() {
-  const [searchResult, setSearchResult] = useState<Student | null>(null);
+  const [searchResult, setSearchResult] = useState<Result | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [currentPage, setCurrentPage] = useState<
     "main" | "registration" | "results" | "schedule" | "news" | "donation"
@@ -49,8 +49,8 @@ function App() {
     }
   }, [currentPage]);
 
-  const handleSearchResult = (student: Student | null) => {
-    setSearchResult(student);
+  const handleSearchResult = (result: Result | null) => {
+    setSearchResult(result);
     setSearchAttempted(true);
   };
 

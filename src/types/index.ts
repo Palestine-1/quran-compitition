@@ -26,3 +26,12 @@ export interface Reciter {
   category: string;
   teacher: string;
 }
+
+export interface Result {
+  id: number;
+  name: string;
+  category: string;
+  grade: number;
+  rank?: number;
+  teacher?: string;
+}

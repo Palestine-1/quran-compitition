@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Reciter } from '../types';
+import { Reciter, Result } from '../types';
 
 // API للبحث عن القراء
 export const searchReciters = async (searchTerm: string): Promise<Reciter[]> => {
@@ -192,6 +192,106 @@ export const searchRecitersWithCache = async (searchTerm: string): Promise<Recit
   apiCache.set(cacheKey, results);
   
   return results;
+};
+
+// API للبحث عن النتائج
+export const searchResults = async (searchTerm: string): Promise<Result[]> => {
+  try {
+    // التأكد من أن الاسم يحتوي على كلمتين على الأقل
+    const nameParts = searchTerm.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      throw new Error('يجب كتابة الاسم ثنائي على الأقل (الاسم الأول والثاني)');
+    }
+
+    const { data, error } = await supabase
+      .from('results')
+      .select('*')
+      .ilike('name', `%${searchTerm}%`)
+      .order('grade', { ascending: false });
+
+    if (error) throw error;
+    
+    // إضافة الترتيب للنتائج
+    const rankedResults = (data || []).map((result, index) => ({
+      ...result,
+      rank: index + 1
+    }));
+    
+    return rankedResults;
+  } catch (error) {
+    console.error('Error searching results:', error);
+    throw error;
+  }
+};
+
+// API لجلب جميع النتائج مع الترتيب
+export const getAllResults = async (): Promise<Result[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('results')
+      .select('*')
+      .order('grade', { ascending: false });
+
+    if (error) throw error;
+    
+    // إضافة الترتيب للنتائج
+    const rankedResults = (data || []).map((result, index) => ({
+      ...result,
+      rank: index + 1
+    }));
+    
+    return rankedResults;
+  } catch (error) {
+    console.error('Error fetching all results:', error);
+    return [];
+  }
+};
+
+// API لجلب إحصائيات النتائج
+export const getResultsStats = async (): Promise<{
+  totalStudents: number;
+  averageGrade: number;
+  topGrade: number;
+  categoriesCount: { [key: string]: number };
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('results')
+      .select('grade, category');
+
+    if (error) throw error;
+
+    const results = data || [];
+    const totalStudents = results.length;
+    const averageGrade = totalStudents > 0 
+      ? Math.round(results.reduce((sum, r) => sum + (r.grade || 0), 0) / totalStudents)
+      : 0;
+    const topGrade = totalStudents > 0 
+      ? Math.max(...results.map(r => r.grade || 0))
+      : 0;
+
+    const categoriesCount: { [key: string]: number } = {};
+    results.forEach(result => {
+      if (result.category) {
+        categoriesCount[result.category] = (categoriesCount[result.category] || 0) + 1;
+      }
+    });
+
+    return {
+      totalStudents,
+      averageGrade,
+      topGrade,
+      categoriesCount
+    };
+  } catch (error) {
+    console.error('Error fetching results stats:', error);
+    return {
+      totalStudents: 0,
+      averageGrade: 0,
+      topGrade: 0,
+      categoriesCount: {}
+    };
+  }
 };
 
 // API محسنة للإحصائيات مع Cache
