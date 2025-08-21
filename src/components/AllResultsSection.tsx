@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Student } from '../types';
+import { Student, Result } from '../types';
 import { ChevronDown, ChevronUp, List, Filter, Clock, Calendar, AlertCircle } from 'lucide-react';
 import { getCategoryColor, getGradeColor } from '../utils/contestStats';
+import { getAllResults } from '../utils/api';
 
 interface AllResultsSectionProps {
   students: Student[];
@@ -11,19 +12,40 @@ interface AllResultsSectionProps {
 export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, isDarkMode = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [contestStarted] = useState(false); // المسابقة لم تبدأ بعد
+  const [contestStarted] = useState(true); // المسابقة بدأت والنتائج متاحة
+  const [results, setResults] = useState<Result[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const categories = [...new Set(students.map(s => s.category))];
-  const filteredStudents = selectedCategory === 'all' 
-    ? students 
-    : students.filter(s => s.category === selectedCategory);
+  const categories = [...new Set(results.map(r => r.category))];
+  const filteredResults = selectedCategory === 'all' 
+    ? results 
+    : results.filter(r => r.category === selectedCategory);
+
+  const loadResults = async () => {
+    setIsLoading(true);
+    try {
+      const allResults = await getAllResults();
+      setResults(allResults);
+    } catch (error) {
+      console.error('Error loading results:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+    if (!isExpanded && results.length === 0) {
+      loadResults();
+    }
+  };
 
   return (
     <section className={`py-16 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={handleExpand}
             className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center gap-3 mx-auto font-semibold text-lg transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25"
           >
             <List className="w-6 h-6 group-hover:animate-bounce" />
@@ -34,7 +56,14 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
 
         {isExpanded && (
           <div className="animate-fadeIn">
-            {!contestStarted ? (
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="inline-block w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  جاري تحميل النتائج...
+                </p>
+              </div>
+            ) : results.length === 0 ? (
               /* Contest not started message */
               <div className="max-w-2xl mx-auto">
                 <div className={`border-2 rounded-3xl p-8 shadow-2xl relative overflow-hidden transition-colors duration-300 ${
@@ -57,7 +86,7 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
                     </div>
                     
                     <h3 className={`text-3xl md:text-4xl font-bold mb-4 animate-fadeInScale ${isDarkMode ? 'text-orange-200' : 'text-orange-800'}`}>
-                      المسابقة لم تبدأ بعد
+                      لا توجد نتائج متاحة حالياً
                     </h3>
                     
                     <div className={`backdrop-blur-sm rounded-2xl p-6 mb-6 border transition-colors duration-300 ${
@@ -66,10 +95,10 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
                         : 'bg-white/70 border-orange-100'
                     }`}>
                       <p className={`text-lg md:text-xl leading-relaxed mb-4 ${isDarkMode ? 'text-orange-200' : 'text-orange-700'}`}>
-                        نحن نعمل بجد لإعداد كل شيء لمسابقة المولد النبوي الشريف
+                        النتائج ستكون متاحة قريباً إن شاء الله
                       </p>
                       <p className={`font-semibold ${isDarkMode ? 'text-orange-300' : 'text-orange-600'}`}>
-                        ترقبوا بدء المسابقة قريباً إن شاء الله
+                        يرجى المحاولة مرة أخرى لاحقاً
                       </p>
                     </div>
                     
@@ -111,6 +140,7 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
             ) : (
               <>
                 {/* Filter section */}
+                {categories.length > 0 && (
                 <div className={`p-6 rounded-xl mb-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                   <div className="flex items-center gap-4 justify-center flex-wrap">
                     <Filter className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
@@ -143,6 +173,7 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
                     ))}
                   </div>
                 </div>
+                )}
 
                 {/* Results table */}
                 <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
@@ -158,36 +189,36 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredStudents.slice(0, 50).map((student, index) => (
-                          <tr key={student.id} className={`border-b transition-colors ${
+                        {filteredResults.slice(0, 50).map((result, index) => (
+                          <tr key={result.id} className={`border-b transition-colors ${
                             isDarkMode 
                               ? 'border-gray-600 hover:bg-gray-600' 
                               : 'border-gray-200 hover:bg-gray-50'
                           }`}>
                             <td className="px-6 py-4 text-center">
                               <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
-                                student.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
-                                student.rank === 2 ? 'bg-gray-100 text-gray-800' :
-                                student.rank === 3 ? 'bg-amber-100 text-amber-800' :
+                                result.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+                                result.rank === 2 ? 'bg-gray-100 text-gray-800' :
+                                result.rank === 3 ? 'bg-amber-100 text-amber-800' :
                                 'bg-blue-100 text-blue-800'
                               }`}>
-                                {student.rank}
+                                {result.rank}
                               </span>
                             </td>
                             <td className={`px-6 py-4 text-center font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                              {student.name}
+                              {result.name}
                             </td>
                             <td className={`px-6 py-4 text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                              {student.id}
+                              {result.id}
                             </td>
                             <td className="px-6 py-4 text-center">
-                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(student.category)}`}>
-                                {student.category}
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(result.category)}`}>
+                                {result.category}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-center">
-                              <span className={`inline-block px-3 py-1 rounded-lg font-bold text-lg ${getGradeColor(student.grade)}`}>
-                                {student.grade}
+                              <span className={`inline-block px-3 py-1 rounded-lg font-bold text-lg ${getGradeColor(result.grade)}`}>
+                                {result.grade}
                               </span>
                             </td>
                           </tr>
@@ -196,11 +227,11 @@ export const AllResultsSection: React.FC<AllResultsSectionProps> = ({ students, 
                     </table>
                   </div>
                   
-                  {filteredStudents.length > 50 && (
+                  {filteredResults.length > 50 && (
                     <div className={`p-4 text-center transition-colors duration-300 ${
                       isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-50 text-gray-600'
                     }`}>
-                      عرض أول 50 نتيجة من أصل {filteredStudents.length} نتيجة
+                      عرض أول 50 نتيجة من أصل {filteredResults.length} نتيجة
                     </div>
                   )}
                 </div>
